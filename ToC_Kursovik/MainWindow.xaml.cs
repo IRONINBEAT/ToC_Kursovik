@@ -99,7 +99,10 @@ namespace ToC_Kursovik
                 ErrorOutput.AppendText($"{token}\n");
             }
 
-
+            foreach (var error in lexer.Errors)
+            {
+                ErrorOutput.AppendText($"{error}\n");
+            }
 
 
 

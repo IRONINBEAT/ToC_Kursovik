@@ -93,7 +93,7 @@ namespace ToC_Kursovik
             string inputText = TextEditor.Text;
             var outputTokens = lexer.Tokenize(inputText);
 
-            List<Error> errors = new List<Error>();
+            List<Error> errors = lexer.Errors;
 
             Parser parser = new Parser(outputTokens, errors);
 
@@ -107,10 +107,9 @@ namespace ToC_Kursovik
 
             else
             {
-                Console.WriteLine("Обнаружены ошибки:");
                 foreach (var error in parsedErrors)
                 {
-                    Console.WriteLine($"Ошибка: {error.ErrorText} на строке {error.Line}, колонке {error.Column}");
+                    ErrorOutput.AppendText($"Ошибка: {error.ErrorText} в строке {error.Line}, столбце {error.Column}\n");
                 }
             }
 

@@ -26,7 +26,7 @@ namespace ToC_Kursovik
                 RecursiveParser recursiveParser = new RecursiveParser(line);
                 errors.AddRange(recursiveParser.Parse());
             }
-            errors.AddRange(errors);
+            errors.AddRange(this.errors);
             return errors.OrderBy(e => e.Column).ToList();
         }
 
@@ -40,7 +40,7 @@ namespace ToC_Kursovik
             {
                 currentLine.Add(token);
 
-                if (token.Type == TokenType.CLOSE_BRACKET)
+                if (token.Value.Contains('\n'))
                 {
                     lines.Add(currentLine);
                     currentLine = new List<Token>();
@@ -228,7 +228,7 @@ namespace ToC_Kursovik
             }
             else if (Match(currentPosition, TokenType.CLOSE_BRACKET, errors))
             {
-                return End(currentPosition + 1, errors);
+                return End(currentPosition, errors);
             }
             //if (!Match(currentPosition, TokenType.COMMAND, errors))
             //{

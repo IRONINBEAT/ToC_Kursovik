@@ -17,7 +17,7 @@ namespace ToC_Kursovik
 
         UNKNOWN_WORD,
         INVALID,
-        WHITESPACE
+        WHITESPACE,
     }
     public class Token
     {

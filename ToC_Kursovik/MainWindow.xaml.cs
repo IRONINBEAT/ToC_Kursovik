@@ -93,16 +93,36 @@ namespace ToC_Kursovik
             string inputText = TextEditor.Text;
             var outputTokens = lexer.Tokenize(inputText);
 
+            List<Error> errors = new List<Error>();
 
-            foreach (var token in outputTokens)
+            Parser parser = new Parser(outputTokens, errors);
+
+            List<Error> parsedErrors = parser.Parse();
+
+            // Вывод ошибок
+            if (parsedErrors.Count == 0)
             {
-                ErrorOutput.AppendText($"{token}\n");
+                ErrorOutput.AppendText("Парсинг прошел без ошибок.");
             }
 
-            foreach (var error in lexer.Errors)
+            else
             {
-                ErrorOutput.AppendText($"{error}\n");
+                Console.WriteLine("Обнаружены ошибки:");
+                foreach (var error in parsedErrors)
+                {
+                    Console.WriteLine($"Ошибка: {error.ErrorText} на строке {error.Line}, колонке {error.Column}");
+                }
             }
+
+            //foreach (var token in outputTokens)
+            //{
+            //    ErrorOutput.AppendText($"{token}\n");
+            //}
+
+            //foreach (var error in lexer.Errors)
+            //{
+            //    ErrorOutput.AppendText($"{error}\n");
+            //}
 
 
 

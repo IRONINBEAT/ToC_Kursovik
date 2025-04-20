@@ -79,11 +79,11 @@ namespace ToC_Kursovik
                     continue;
                 }
 
-                if (matchedType == TokenType.WHITESPACE)
-                {
-                    FlushBuffer();
-                    continue;
-                }
+                //if (matchedType == TokenType.WHITESPACE)
+                //{
+                //    FlushBuffer();
+                //    continue;
+                //}
 
                 if (matchedType == TokenType.UNKNOWN_WORD)
                 {

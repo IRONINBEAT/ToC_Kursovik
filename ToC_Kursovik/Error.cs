@@ -12,6 +12,13 @@ namespace ToC_Kursovik
         private int _line;
         private int _column;
 
+        
+
+        public string ErrorText { get { return _errorText; } }
+
+        public int Line { get { return _line; } }
+
+        public int Column { get { return _column; } }
 
         public Error(string errorText, int line, int column)
         {

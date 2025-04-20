@@ -27,7 +27,8 @@ namespace ToC_Kursovik
                 errors.AddRange(recursiveParser.Parse());
             }
             errors.AddRange(this.errors);
-            return errors.OrderBy(e => e.Column).ToList();
+
+            return errors;
         }
 
 
@@ -40,7 +41,7 @@ namespace ToC_Kursovik
             {
                 currentLine.Add(token);
 
-                if (token.Value.Contains('\n'))
+                if (token.Type == TokenType.CLOSE_BRACKET)
                 {
                     lines.Add(currentLine);
                     currentLine = new List<Token>();
@@ -80,7 +81,7 @@ namespace ToC_Kursovik
             {
                 return errors;
             }
-            //currentPosition = SkipInvalid(currentPosition, TokenType.REPEAT, errors);
+
             if (Match(currentPosition, TokenType.WHITESPACE, errors))
                 return Start(currentPosition + 1, errors);
             if (!Match(currentPosition, TokenType.REPEAT, errors))
@@ -100,7 +101,7 @@ namespace ToC_Kursovik
             {
                 return errors;
             }
-            //currentPosition = SkipInvalid(currentPosition, TokenType.WHITESPACE, errors);
+
             if (!Match(currentPosition, TokenType.WHITESPACE, errors))
             {
                 return GetMinErrorList(
@@ -118,7 +119,7 @@ namespace ToC_Kursovik
             {
                 return errors;
             }
-            //currentPosition = SkipInvalid(currentPosition, TokenType.NUMBER, errors);
+
             if (Match(currentPosition, TokenType.WHITESPACE, errors))
                 return NumberAfterRepeat(currentPosition + 1, errors);
             if (!Match(currentPosition, TokenType.NUMBER, errors))
@@ -138,7 +139,7 @@ namespace ToC_Kursovik
             {
                 return errors;
             }
-            //currentPosition = SkipInvalid(currentPosition, TokenType.OPEN_BRACKET, errors);
+
 
             if (Match(currentPosition, TokenType.WHITESPACE, errors))
                 return OpenBracket(currentPosition + 1, errors);
@@ -160,7 +161,7 @@ namespace ToC_Kursovik
             {
                 return errors;
             }
-            //currentPosition = SkipInvalid(currentPosition, TokenType.OPEN_BRACKET, errors);
+
 
             if (Match(currentPosition, TokenType.WHITESPACE, errors))
                 return Command(currentPosition + 1, errors);
@@ -182,7 +183,7 @@ namespace ToC_Kursovik
             {
                 return errors;
             }
-            //currentPosition = SkipInvalid(currentPosition, TokenType.WHITESPACE, errors);
+
             if (!Match(currentPosition, TokenType.WHITESPACE, errors))
             {
                 return GetMinErrorList(
@@ -200,7 +201,7 @@ namespace ToC_Kursovik
             {
                 return errors;
             }
-            //currentPosition = SkipInvalid(currentPosition, TokenType.NUMBER, errors);
+
             if (Match(currentPosition, TokenType.WHITESPACE, errors))
                 return NumberAfterCommand(currentPosition + 1, errors);
             if (!Match(currentPosition, TokenType.NUMBER, errors))
@@ -214,40 +215,37 @@ namespace ToC_Kursovik
             return CloseBracketOrCommand(currentPosition + 1, errors);
         }
 
+
+
         private List<Error> CloseBracketOrCommand(int currentPosition, List<Error> errors)
         {
             if (IsAtEnd(currentPosition))
             {
                 return errors;
             }
+
             if (Match(currentPosition, TokenType.WHITESPACE, errors))
                 return CloseBracketOrCommand(currentPosition + 1, errors);
+
             if (Match(currentPosition, TokenType.COMMAND, errors))
             {
                 return SpaceAfterCommand(currentPosition + 1, errors);
             }
+
             else if (Match(currentPosition, TokenType.CLOSE_BRACKET, errors))
             {
                 return End(currentPosition, errors);
             }
-            //if (!Match(currentPosition, TokenType.COMMAND, errors))
-            //{
-            //    return GetMinErrorList(
-            //            SpaceAfterCommand(currentPosition, CreateErrorList(currentPosition, TokenType.COMMAND, ErrorType.PUSH, errors)),
-            //            SpaceAfterCommand(currentPosition + 1, CreateErrorList(currentPosition, TokenType.COMMAND, ErrorType.REPLACE, errors)),
-            //            CloseBracketOrCommand(currentPosition + 1, CreateErrorList(currentPosition, TokenType.COMMAND, ErrorType.DELETE, errors))
-            //    );
-            //}
-            //else if (!Match(currentPosition, TokenType.CLOSE_BRACKET, errors))
-            //{
-            //    return GetMinErrorList(
-            //            End(currentPosition, CreateErrorList(currentPosition, TokenType.CLOSE_BRACKET, ErrorType.PUSH, errors)),
-            //            End(currentPosition + 1, CreateErrorList(currentPosition, TokenType.CLOSE_BRACKET, ErrorType.REPLACE, errors)),
-            //            CloseBracketOrCommand(currentPosition + 1, CreateErrorList(currentPosition, TokenType.CLOSE_BRACKET, ErrorType.DELETE, errors))
-            //    );
-            //}
-            return End(currentPosition + 1, errors);
+
+            return GetMinErrorList(
+                        End(currentPosition, CreateErrorList(currentPosition, TokenType.CLOSE_BRACKET, ErrorType.PUSH, errors)),
+                        End(currentPosition + 1, CreateErrorList(currentPosition, TokenType.CLOSE_BRACKET, ErrorType.REPLACE, errors)),
+                        CloseBracketOrCommand(currentPosition + 1, CreateErrorList(currentPosition, TokenType.CLOSE_BRACKET, ErrorType.DELETE, errors))
+                );
+
         }
+
+
 
         private List<Error> End(int currentPosition, List<Error> errors)
         {
@@ -352,13 +350,26 @@ namespace ToC_Kursovik
             return currentPosition >= tokens.Count;
         }
 
+        //private void AddError(int currentPosition, TokenType expectedTokentype, ErrorType errorType, List<Error> errors)
+        //{
+        //    var (line, column) = GetPositionForError(currentPosition, errorType);
+
+        //    errors.Add(
+        //        new Error(
+        //            CreateErrorMessage(currentPosition, expectedTokentype, errorType),
+        //            line,
+        //            column
+        //        )
+        //    );
+        //}
+
         private void AddError(int currentPosition, TokenType expectedTokentype, ErrorType errorType, List<Error> errors)
         {
             errors.Add(
                     new Error(
                             CreateErrorMessage(currentPosition, expectedTokentype, errorType),
-                            GetToken(currentPosition).Line,
-                            GetToken(currentPosition).Column
+                            GetToken(currentPosition - 1).Line,
+                            GetToken(currentPosition - 1).Column
                     )
             );
         }
@@ -380,6 +391,30 @@ namespace ToC_Kursovik
 
                 _ => string.Empty
             };
+        }
+
+        private (int line, int column) GetPositionForError(int currentPosition, ErrorType errorType)
+        {
+            if (errorType == ErrorType.PUSH)
+            {
+                if (IsAtEnd(currentPosition) && tokens.Count > 0)
+                {
+                    var last = tokens[^1]; // последний токен
+                    return (last.Line, last.Column + last.Value.Length);
+                }
+                else if (currentPosition < tokens.Count)
+                {
+                    var token = tokens[currentPosition];
+                    return (token.Line, token.Column);
+                }
+            }
+            else if (currentPosition < tokens.Count)
+            {
+                var token = tokens[currentPosition];
+                return (token.Line, token.Column);
+            }
+
+            return (1, 1); // на всякий случай, если токенов нет вообще
         }
 
         private string GetTokenTypeDescription(TokenType type)

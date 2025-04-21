@@ -153,15 +153,7 @@ namespace ToC_Kursovik
             }
 
         }
-        private TokenType GetTokenType(string keyword)
-        {
-            return keyword switch
-            {
-                "repeat" => TokenType.REPEAT,
-                "right" or "left" or "forward" or "back" => TokenType.COMMAND,
-                _ => TokenType.UNKNOWN_WORD
-            };
-        }
+        
     }
 
 

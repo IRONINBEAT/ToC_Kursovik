@@ -227,6 +227,10 @@ namespace ToC_Kursovik
         {
             if (IsAtEnd(currentPosition))
             {
+                if (!Match(currentPosition - 1, TokenType.CLOSE_BRACKET, errors))
+                {
+                    AddError(currentPosition - 1, TokenType.CLOSE_BRACKET, ErrorType.PUSH, errors);
+                }
                 return errors;
             }
 
@@ -234,20 +238,19 @@ namespace ToC_Kursovik
                 return CloseBracketOrCommand(currentPosition + 1, errors);
 
             if (Match(currentPosition, TokenType.COMMAND, errors))
-            {
                 return SpaceAfterCommand(currentPosition + 1, errors);
-            }
 
-            else if (Match(currentPosition, TokenType.CLOSE_BRACKET, errors))
-            {
-                return End(currentPosition, errors);
-            }
+            //else if (!Match(currentPosition, TokenType.CLOSE_BRACKET, errors))
+            //{
+            //    return GetMinErrorList(
+            //            End(currentPosition, CreateErrorList(currentPosition, TokenType.CLOSE_BRACKET, ErrorType.PUSH, errors)),
+            //            End(currentPosition + 1, CreateErrorList(currentPosition, TokenType.CLOSE_BRACKET, ErrorType.REPLACE, errors)),
+            //            CloseBracketOrCommand(currentPosition + 1, CreateErrorList(currentPosition, TokenType.CLOSE_BRACKET, ErrorType.DELETE, errors))
+            //    );
 
-            return GetMinErrorList(
-                        End(currentPosition, CreateErrorList(currentPosition, TokenType.CLOSE_BRACKET, ErrorType.PUSH, errors)),
-                        End(currentPosition + 1, CreateErrorList(currentPosition, TokenType.CLOSE_BRACKET, ErrorType.REPLACE, errors)),
-                        CloseBracketOrCommand(currentPosition + 1, CreateErrorList(currentPosition, TokenType.CLOSE_BRACKET, ErrorType.DELETE, errors))
-                );
+            //}
+
+            return End(currentPosition + 1, errors);
 
         }
 
@@ -258,13 +261,10 @@ namespace ToC_Kursovik
 
             if (IsAtEnd(currentPosition))
             {
-                errors.Add(
-                        new Error(
-                                CreateErrorMessage(currentPosition - 1, TokenType.CLOSE_BRACKET, ErrorType.PUSH),
-                                GetToken(currentPosition - 1).Line,
-                                GetToken(currentPosition - 1).Column
-                        )
-                );
+                if (!Match(currentPosition - 1, TokenType.CLOSE_BRACKET, errors))
+                {
+                    AddError(currentPosition - 1, TokenType.CLOSE_BRACKET, ErrorType.PUSH, errors);
+                }
                 return errors;
             }
             if (Match(currentPosition, TokenType.WHITESPACE, errors))
@@ -358,19 +358,6 @@ namespace ToC_Kursovik
 
         //private void AddError(int currentPosition, TokenType expectedTokentype, ErrorType errorType, List<Error> errors)
         //{
-        //    var (line, column) = GetPositionForError(currentPosition, errorType);
-
-        //    errors.Add(
-        //        new Error(
-        //            CreateErrorMessage(currentPositi on, expectedTokentype, errorType),
-        //            line,
-        //            column
-        //        )
-        //    );
-        //}
-
-        //private void AddError(int currentPosition, TokenType expectedTokentype, ErrorType errorType, List<Error> errors)
-        //{
         //    if (currentPosition <= 0)
         //    {
         //        errors.Add(
@@ -409,11 +396,14 @@ namespace ToC_Kursovik
                 }
                 else if (currentPosition > 0 && currentPosition <= tokens.Count)
                 {
-                    var prevToken = tokens[currentPosition - 1];
+
+                    var prevToken = tokens[currentPosition - 2]; 
                     line = prevToken.Line;
 
+                    //column = prevToken.Column + prevToken.Value.Length;
+
                     // Найдём начало строки (первый токен на этой строке)
-                    int lineStartIndex = currentPosition - 1;
+                    int lineStartIndex = currentPosition - 1; 
                     while (lineStartIndex > 0 && tokens[lineStartIndex - 1].Line == line)
                         lineStartIndex--;
 
@@ -447,6 +437,56 @@ namespace ToC_Kursovik
             ));
         }
 
+        //private void AddError(int currentPosition, TokenType expectedTokenType, ErrorType errorType, List<Error> errors)
+        //{
+        //    int line = 1;
+        //    int column = 1;
+
+        //    if (errorType == ErrorType.PUSH)
+        //    {
+        //        if (currentPosition == 0 && tokens.Count > 0)
+        //        {
+        //            var token = tokens[0];
+        //            line = token.Line;
+        //            column = token.Column;
+        //        }
+        //        else if (currentPosition > 0 && currentPosition < tokens.Count)
+        //        {
+        //            var prevToken = tokens[currentPosition - 1];
+        //            var nextToken = tokens[currentPosition];
+
+        //            if (prevToken.Line == nextToken.Line)
+        //            {
+        //                line = nextToken.Line;
+        //                column = nextToken.Column;
+        //            }
+        //            else
+        //            {
+        //                line = prevToken.Line;
+        //                column = prevToken.Column + prevToken.Value.Length;
+        //            }
+        //        }
+        //        else if (currentPosition == tokens.Count && tokens.Count > 0)
+        //        {
+        //            var last = tokens[^1];
+        //            line = last.Line;
+        //            column = last.Column + last.Value.Length;
+        //        }
+        //    }
+        //    else if (currentPosition < tokens.Count)
+        //    {
+        //        var token = tokens[currentPosition];
+        //        line = token.Line;
+        //        column = token.Column;
+        //    }
+
+        //    errors.Add(new Error(
+        //        CreateErrorMessage(currentPosition, expectedTokenType, errorType),
+        //        line,
+        //        column
+        //    ));
+        //}
+
         private string CreateErrorMessage(int currentPosition, TokenType expectedTokenType, ErrorType errorType)
         {
             var actualToken = GetToken(currentPosition);
@@ -471,7 +511,7 @@ namespace ToC_Kursovik
             return type switch
             {
                 TokenType.REPEAT => "repeat",
-                TokenType.COMMAND => "forward | repeat | back | right",
+                TokenType.COMMAND => "forward | right | back | left",
                 TokenType.NUMBER => "число",
                 TokenType.OPEN_BRACKET => "[",
                 TokenType.CLOSE_BRACKET => "]",

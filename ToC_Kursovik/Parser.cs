@@ -240,15 +240,20 @@ namespace ToC_Kursovik
             if (Match(currentPosition, TokenType.COMMAND, errors))
                 return SpaceAfterCommand(currentPosition + 1, errors);
 
-            //else if (!Match(currentPosition, TokenType.CLOSE_BRACKET, errors))
-            //{
-            //    return GetMinErrorList(
-            //            End(currentPosition, CreateErrorList(currentPosition, TokenType.CLOSE_BRACKET, ErrorType.PUSH, errors)),
-            //            End(currentPosition + 1, CreateErrorList(currentPosition, TokenType.CLOSE_BRACKET, ErrorType.REPLACE, errors)),
-            //            CloseBracketOrCommand(currentPosition + 1, CreateErrorList(currentPosition, TokenType.CLOSE_BRACKET, ErrorType.DELETE, errors))
-            //    );
-
-            //}
+            else if (Match(currentPosition, TokenType.UNKNOWN_WORD, errors) || Match(currentPosition, TokenType.NUMBER, errors))
+            {
+                if (Match(currentPosition, TokenType.NUMBER, errors))
+                {
+                    AddError(currentPosition, TokenType.NUMBER, ErrorType.DELETE, errors);
+                    return CloseBracketOrCommand(currentPosition + 1, errors);
+                }
+                else
+                {
+                    AddError(currentPosition, TokenType.UNKNOWN_WORD, ErrorType.DELETE, errors);
+                    return CloseBracketOrCommand(currentPosition + 1, errors);
+                }
+                
+            }
 
             return End(currentPosition + 1, errors);
 

@@ -386,7 +386,7 @@ namespace ToC_Kursovik
             int line = 1;
             int column = 1;
 
-            if (errorType == ErrorType.PUSH)
+            if (errorType == ErrorType.PUSH || errorType == ErrorType.REPLACE)
             {
                 if (currentPosition == 0 && tokens.Count > 0)
                 {

@@ -397,24 +397,24 @@ namespace ToC_Kursovik
                 else if (currentPosition > 0 && currentPosition <= tokens.Count)
                 {
 
-                    var prevToken = tokens[currentPosition - 2]; 
+                    var prevToken = tokens[currentPosition - 1]; 
                     line = prevToken.Line;
 
-                    //column = prevToken.Column + prevToken.Value.Length;
+                    column = prevToken.Column + 1;
 
                     // Найдём начало строки (первый токен на этой строке)
-                    int lineStartIndex = currentPosition - 1; 
-                    while (lineStartIndex > 0 && tokens[lineStartIndex - 1].Line == line)
-                        lineStartIndex--;
+                    //int lineStartIndex = currentPosition - 1; 
+                    //while (lineStartIndex > 0 && tokens[lineStartIndex - 1].Line == line)
+                    //    lineStartIndex--;
 
-                    // Теперь суммируем длины всех токенов на этой строке до текущего
-                    int columnOffset = 0;
-                    for (int i = lineStartIndex; i < currentPosition; i++)
-                    {
-                        columnOffset += tokens[i].Value.Length;
-                    }
+                    //// Теперь суммируем длины всех токенов на этой строке до текущего
+                    //int columnOffset = 0;
+                    //for (int i = lineStartIndex; i <= currentPosition; i++)
+                    //{
+                    //    columnOffset += tokens[i].Value.Length;
+                    //}
 
-                    column = columnOffset + 1;
+                    //column = columnOffset + 1;
                 }
                 else if (tokens.Count > 0)
                 {

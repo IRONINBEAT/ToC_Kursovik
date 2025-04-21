@@ -165,6 +165,10 @@ namespace ToC_Kursovik
         {
             if (IsAtEnd(currentPosition))
             {
+                if (!Match(currentPosition - 1, TokenType.CLOSE_BRACKET, errors))
+                {
+                    AddError(currentPosition - 1, TokenType.CLOSE_BRACKET, ErrorType.PUSH, errors);
+                }
                 return errors;
             }
 

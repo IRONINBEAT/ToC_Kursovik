@@ -243,6 +243,7 @@ namespace ToC_Kursovik
             else if (Match(currentPosition, TokenType.UNKNOWN_WORD, errors) || Match(currentPosition, TokenType.NUMBER, errors))
             {
                 if (Match(currentPosition, TokenType.NUMBER, errors))
+
                 {
                     AddError(currentPosition, TokenType.NUMBER, ErrorType.DELETE, errors);
                     return CloseBracketOrCommand(currentPosition + 1, errors);

@@ -20,15 +20,19 @@ namespace ToC_Kursovik
 
         public List<Error> Parse()
         {
-            List<Error> errors = new List<Error>();
+
+            List<Error> errors = [.. this.errors];
             foreach (List<Token> line in SplitTokensIntoLines(tokens))
             {
                 RecursiveParser recursiveParser = new RecursiveParser(line);
                 errors.AddRange(recursiveParser.Parse());
             }
-            errors.AddRange(this.errors);
+            
 
-            return errors;
+            return errors
+                .OrderBy(e => e.Line)
+                .ThenBy(e => e.Column)
+                .ToList();
         }
 
 
@@ -84,6 +88,7 @@ namespace ToC_Kursovik
 
             if (Match(currentPosition, TokenType.WHITESPACE, errors))
                 return Start(currentPosition + 1, errors);
+            
             if (!Match(currentPosition, TokenType.REPEAT, errors))
             {
                 return GetMinErrorList(
@@ -92,6 +97,7 @@ namespace ToC_Kursovik
                         Start(currentPosition + 1, CreateErrorList(currentPosition, TokenType.REPEAT, ErrorType.DELETE, errors))
                 );
             }
+
             return SpaceAfterRepeat(currentPosition + 1, errors);
         }
 
@@ -254,7 +260,7 @@ namespace ToC_Kursovik
             {
                 errors.Add(
                         new Error(
-                                CreateErrorMessage(currentPosition, TokenType.CLOSE_BRACKET, ErrorType.PUSH),
+                                CreateErrorMessage(currentPosition - 1, TokenType.CLOSE_BRACKET, ErrorType.PUSH),
                                 GetToken(currentPosition - 1).Line,
                                 GetToken(currentPosition - 1).Column
                         )
@@ -356,22 +362,89 @@ namespace ToC_Kursovik
 
         //    errors.Add(
         //        new Error(
-        //            CreateErrorMessage(currentPosition, expectedTokentype, errorType),
+        //            CreateErrorMessage(currentPositi on, expectedTokentype, errorType),
         //            line,
         //            column
         //        )
         //    );
         //}
 
-        private void AddError(int currentPosition, TokenType expectedTokentype, ErrorType errorType, List<Error> errors)
+        //private void AddError(int currentPosition, TokenType expectedTokentype, ErrorType errorType, List<Error> errors)
+        //{
+        //    if (currentPosition <= 0)
+        //    {
+        //        errors.Add(
+        //            new Error(
+        //                    CreateErrorMessage(currentPosition, expectedTokentype, errorType),
+        //                    GetToken(currentPosition).Line,
+        //                    GetToken(currentPosition).Column
+        //            )
+        //    );
+        //    }
+        //    else
+        //    {
+        //        errors.Add(
+        //            new Error(
+        //                    CreateErrorMessage(currentPosition, expectedTokentype, errorType),
+        //                    GetToken(currentPosition - 1).Line,
+        //                    GetToken(currentPosition).Column
+        //            )
+        //    );
+        //    }
+
+        //}
+
+        private void AddError(int currentPosition, TokenType expectedTokenType, ErrorType errorType, List<Error> errors)
         {
-            errors.Add(
-                    new Error(
-                            CreateErrorMessage(currentPosition, expectedTokentype, errorType),
-                            GetToken(currentPosition - 1).Line,
-                            GetToken(currentPosition - 1).Column
-                    )
-            );
+            int line = 1;
+            int column = 1;
+
+            if (errorType == ErrorType.PUSH)
+            {
+                if (currentPosition == 0 && tokens.Count > 0)
+                {
+                    var token = tokens[0];
+                    line = token.Line;
+                    column = token.Column;
+                }
+                else if (currentPosition > 0 && currentPosition <= tokens.Count)
+                {
+                    var prevToken = tokens[currentPosition - 1];
+                    line = prevToken.Line;
+
+                    // Найдём начало строки (первый токен на этой строке)
+                    int lineStartIndex = currentPosition - 1;
+                    while (lineStartIndex > 0 && tokens[lineStartIndex - 1].Line == line)
+                        lineStartIndex--;
+
+                    // Теперь суммируем длины всех токенов на этой строке до текущего
+                    int columnOffset = 0;
+                    for (int i = lineStartIndex; i < currentPosition; i++)
+                    {
+                        columnOffset += tokens[i].Value.Length;
+                    }
+
+                    column = columnOffset + 1;
+                }
+                else if (tokens.Count > 0)
+                {
+                    var last = tokens[^1];
+                    line = last.Line;
+                    column = last.Column + last.Value.Length;
+                }
+            }
+            else if (currentPosition < tokens.Count)
+            {
+                var token = tokens[currentPosition];
+                line = token.Line;
+                column = token.Column;
+            }
+
+            errors.Add(new Error(
+                CreateErrorMessage(currentPosition, expectedTokenType, errorType),
+                line,
+                column
+            ));
         }
 
         private string CreateErrorMessage(int currentPosition, TokenType expectedTokenType, ErrorType errorType)
@@ -387,34 +460,10 @@ namespace ToC_Kursovik
                     $"{errorType.GetDescription()}: '{GetTokenTypeDescription(expectedTokenType)}'",
 
                 ErrorType.REPLACE =>
-                    $"Ожидалось: '{GetTokenTypeDescription(expectedTokenType)}' Фактически: '{GetTokenTypeDescription(actualToken.Type)}'",
+                    $"Ожидалось: '{GetTokenTypeDescription(expectedTokenType)}' Фактически: '{actualToken.Value}'",
 
                 _ => string.Empty
             };
-        }
-
-        private (int line, int column) GetPositionForError(int currentPosition, ErrorType errorType)
-        {
-            if (errorType == ErrorType.PUSH)
-            {
-                if (IsAtEnd(currentPosition) && tokens.Count > 0)
-                {
-                    var last = tokens[^1]; // последний токен
-                    return (last.Line, last.Column + last.Value.Length);
-                }
-                else if (currentPosition < tokens.Count)
-                {
-                    var token = tokens[currentPosition];
-                    return (token.Line, token.Column);
-                }
-            }
-            else if (currentPosition < tokens.Count)
-            {
-                var token = tokens[currentPosition];
-                return (token.Line, token.Column);
-            }
-
-            return (1, 1); // на всякий случай, если токенов нет вообще
         }
 
         private string GetTokenTypeDescription(TokenType type)
@@ -422,7 +471,7 @@ namespace ToC_Kursovik
             return type switch
             {
                 TokenType.REPEAT => "repeat",
-                TokenType.COMMAND => "команда",
+                TokenType.COMMAND => "forward | repeat | back | right",
                 TokenType.NUMBER => "число",
                 TokenType.OPEN_BRACKET => "[",
                 TokenType.CLOSE_BRACKET => "]",

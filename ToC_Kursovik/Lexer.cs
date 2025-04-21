@@ -113,6 +113,22 @@ namespace ToC_Kursovik
             {
                 if (!string.IsNullOrEmpty(buffer))
                 {
+                    /*---------------*/
+                    //string[] knownKeywords = { "repeat", "right", "left", "forward", "back" };
+
+                    //foreach (var keyword in knownKeywords)
+                    //{
+                    //    var keywordRegex = new Regex($"^({keyword})(\\d+)$");
+                    //    var match = keywordRegex.Match(buffer);
+                    //    if (match.Success)
+                    //    {
+                    //        tokens.Add(new Token(GetTokenType(keyword), match.Groups[1].Value, -1, bufferLine, bufferColumn));
+                    //        tokens.Add(new Token(TokenType.NUMBER, match.Groups[2].Value, -1, bufferLine, bufferColumn + match.Groups[1].Value.Length));
+                    //        buffer = "";
+                    //        return;
+                    //    }
+                    //}
+                    /*-----------------------*/
                     // Повторный прогон склеенной строки
                     var recheckMatches = combinedRegex.Matches(buffer);
 
@@ -133,7 +149,18 @@ namespace ToC_Kursovik
 
                     buffer = "";
                 }
+
             }
+
+        }
+        private TokenType GetTokenType(string keyword)
+        {
+            return keyword switch
+            {
+                "repeat" => TokenType.REPEAT,
+                "right" or "left" or "forward" or "back" => TokenType.COMMAND,
+                _ => TokenType.UNKNOWN_WORD
+            };
         }
     }
 

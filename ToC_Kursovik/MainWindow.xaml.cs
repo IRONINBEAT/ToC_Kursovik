@@ -69,7 +69,6 @@ namespace ToC_Kursovik
                 e.Handled = true; // Предотвращаем дальнейшую обработку
             }
         }
-
         // Обработчик нажатия клавиш
         private void TextEditor_PreviewKeyDown(object sender, KeyEventArgs e)
         {
@@ -99,13 +98,8 @@ namespace ToC_Kursovik
 
             List<Error> parsedErrors = parser.Parse();
 
-            // Вывод ошибок
-            if (parsedErrors.Count == 0)
-            {
-                ErrorOutput.AppendText("Парсинг прошел без ошибок.");
-            }
-
-            else
+            
+            if (parsedErrors.Count >= 0)
             {
                 foreach (var error in parsedErrors)
                 {
@@ -411,7 +405,6 @@ namespace ToC_Kursovik
             UpdateLineNumbers();
             TextEditor.Visibility = Visibility.Visible;
             HighlightedText.Visibility = Visibility.Collapsed;
-
         }
 
         private void UpdateLineNumbers()

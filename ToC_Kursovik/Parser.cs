@@ -204,7 +204,7 @@ namespace ToC_Kursovik
             }
             return NumberAfterCommand(currentPosition + 1, errors);
         }
-
+        
         private List<Error> NumberAfterCommand(int currentPosition, List<Error> errors)
         {
             if (IsAtEnd(currentPosition))
@@ -213,6 +213,7 @@ namespace ToC_Kursovik
                 {
                     AddError(currentPosition - 1, TokenType.CLOSE_BRACKET, ErrorType.PUSH, errors);
                 }
+                
                 return errors;
             }
 
@@ -522,7 +523,7 @@ namespace ToC_Kursovik
             return errorType switch
             {
                 ErrorType.DELETE or ErrorType.DELETE_END =>
-                    $"{errorType.GetDescription()}: '{GetTokenTypeDescription(actualToken.Type)}'",
+                    $"{errorType.GetDescription()}: '{actualToken.Value}'",
 
                 ErrorType.PUSH =>
                     $"{errorType.GetDescription()}: '{GetTokenTypeDescription(expectedTokenType)}'",

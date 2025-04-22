@@ -209,6 +209,10 @@ namespace ToC_Kursovik
         {
             if (IsAtEnd(currentPosition))
             {
+                if (!Match(currentPosition - 1, TokenType.CLOSE_BRACKET, errors))
+                {
+                    AddError(currentPosition - 1, TokenType.CLOSE_BRACKET, ErrorType.PUSH, errors);
+                }
                 return errors;
             }
 
@@ -404,13 +408,27 @@ namespace ToC_Kursovik
                     line = token.Line;
                     column = token.Column;
                 }
+
+
+
                 else if (currentPosition > 0 && currentPosition <= tokens.Count)
                 {
+                //var currToken = tokens[currentPosition];
+                if (expectedTokenType == TokenType.CLOSE_BRACKET)
+                {
+                    var currToken = tokens[currentPosition];
+                    line = currToken.Line;
 
-                    var prevToken = tokens[currentPosition - 1]; 
+                    column = currToken.Column + currToken.Value.Length;
+                }
+                else
+                {
+                    var prevToken = tokens[currentPosition - 1];
                     line = prevToken.Line;
 
                     column = prevToken.Column + 1;
+                }
+                    
 
                     // Найдём начало строки (первый токен на этой строке)
                     //int lineStartIndex = currentPosition - 1; 
@@ -426,12 +444,12 @@ namespace ToC_Kursovik
 
                     //column = columnOffset + 1;
                 }
-                else if (tokens.Count > 0)
-                {
-                    var last = tokens[^1];
-                    line = last.Line;
-                    column = last.Column + last.Value.Length;
-                }
+                //else if (tokens.Count > 0)
+                //{
+                //    var last = tokens[^1];
+                //    line = last.Line;
+                //    column = last.Column + last.Value.Length;
+                //}
             }
             else if (currentPosition < tokens.Count)
             {

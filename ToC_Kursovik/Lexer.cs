@@ -16,7 +16,7 @@ namespace ToC_Kursovik
         { TokenType.NUMBER,       @"\b\d+(\.\d+)?\b" },
         { TokenType.OPEN_BRACKET,  @"\[" },
         { TokenType.CLOSE_BRACKET, @"\]" },
-        { TokenType.WHITESPACE,   @"\s+" },
+        { TokenType.WHITESPACE,   @"\s+" }, 
         { TokenType.INVALID,      @"[^a-zA-Z0-9\s\[\]]+" },
         { TokenType.UNKNOWN_WORD, @"\b\w+\b" },
     };

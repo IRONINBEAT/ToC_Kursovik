@@ -44,6 +44,7 @@ namespace ToC_Kursovik
 
             var matches = combinedRegex.Matches(input);
 
+            //присвоение TokenType по регулярному выражению
             foreach (Match match in matches)
             {
                 TokenType matchedType = TokenType.INVALID;
@@ -58,6 +59,7 @@ namespace ToC_Kursovik
                     }
                 }
 
+                //вычисление позиции
                 int newlines = value.Count(c => c == '\n');
                 int currentLine = line;
                 int currentColumn = column;

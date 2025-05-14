@@ -80,17 +80,16 @@
                     <MenuItem Header="Выделить все" Click="SelectAllText"/>
                 </MenuItem>
                 <MenuItem Header="Текст">
-                    <MenuItem Header="Регулярное выражение ЛР№2" Click="GetRegularExpression"/>
-                    <MenuItem Header="Постановка задачи"/>
-                    <MenuItem Header="Грамматика"/>
-                    <MenuItem Header="Классификация грамматики"/>
-                    <MenuItem Header="Метод анализа"/>
-                    <MenuItem Header="Диагностика и нейтрализация ошибок"/>
-                    <MenuItem Header="Тестовый пример"/>
-                    <MenuItem Header="Список литературы"/>
-                    <MenuItem Header="Исходный код программы"/>
+                    <MenuItem Header="Постановка задачи" Click="TaskSetup"/>
+                    <MenuItem Header="Грамматика" Click="Grammar"/>
+                    <MenuItem Header="Классификация грамматики" Click="GrammarClassification"/>
+                    <MenuItem Header="Метод анализа" Click="MethodOfAnalizys"/>
+                    <MenuItem Header="Диагностика и нейтрализация ошибок" Click="IronsMethod"/>
+                    <MenuItem Header="Тестовый пример" Click="TestExamples"/>
+                    <MenuItem Header="Список литературы" Click="Literature"/>
+                    <MenuItem Header="Исходный код программы" Click="Code"/>
                 </MenuItem>
-                <MenuItem Header="Пуск">
+                <MenuItem Header="Пуск" Click="RunSyntaxCheck">
                 </MenuItem>
                 <MenuItem Header="Справка">
                     <MenuItem Header="Вызов справки" Click="ShowHelp"/>
@@ -181,7 +180,7 @@
                     </DockPanel>
                 </ScrollViewer>
 
-                <Border BorderBrush="Black" BorderThickness="2" Grid.Row="1" Grid.ColumnSpan="2" >
+                <Border x:Name="ErrorBorder" BorderBrush="Black" BorderThickness="2" Grid.Row="1" Grid.ColumnSpan="2" >
                     <TextBox Name="ErrorOutput" IsReadOnly="True" TextWrapping="Wrap" Background="#EEE" />
                 </Border>
             </Grid>

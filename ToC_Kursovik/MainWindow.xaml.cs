@@ -22,6 +22,8 @@ namespace ToC_Kursovik
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
         private string currentFilePath;
+        private string _lastSavedText;
+        private bool _isCommand = false;
         private UndoStack _undoStack;
         private RedoStack _redoStack;
 
@@ -85,7 +87,8 @@ namespace ToC_Kursovik
 
         private void RunSyntaxCheck(object sender, RoutedEventArgs e)
         {
-            /*------------------------Лаба----------------------------*/
+
+            ErrorBorder.BorderBrush = new SolidColorBrush(Colors.Black);
             ErrorOutput.Clear();
             Lexer lexer = new();
 
@@ -98,95 +101,18 @@ namespace ToC_Kursovik
 
             List<Error> parsedErrors = parser.Parse();
 
-            
-            if (parsedErrors.Count >= 0)
+
+
+            if (parsedErrors.Count > 0)
             {
+                ErrorBorder.BorderBrush = new SolidColorBrush(Colors.Red);
                 foreach (var error in parsedErrors)
                 {
                     ErrorOutput.AppendText($"Ошибка: {error.ErrorText} в строке {error.Line}, столбце {error.Column}\n");
                 }
+
             }
-
-            //foreach (var token in outputTokens)
-            //{
-            //    ErrorOutput.AppendText($"{token}\n");
-            //}
-
-            //foreach (var error in lexer.Errors)
-            //{
-            //    ErrorOutput.AppendText($"{error}\n");
-            //}
-
-
-
-            /*------------------------Курсовик------------------------*/
-            //    var lexer = new Lexer();
-            //    var tokens = lexer.Tokenize(TextEditor.Text);
-
-            //    var parser = new Parser();
-            //    var ast = parser.Parse(tokens);
-
-
-            //    if (parser.Errors.Count > 0)
-            //    {
-            //        foreach (var error in parser.Errors)
-            //            ErrorOutput.AppendText($"{error}\n");
-            //    }
-            //    else
-            //    {
-            //        ErrorOutput.AppendText("✅ Синтаксический разбор успешен:\n");
-            //        ErrorOutput.AppendText($"{ast}");
-            //    }
-            //}
-
-            //private void RunSyntaxCheck(object sender, RoutedEventArgs e)
-            //{
-            //    //ErrorOutput.Clear();
-            //    //Lexer lexer = new Lexer();
-            //    //List<Token> tokens = lexer.Analyze(TextEditor.Text);
-
-            //    //foreach (var token in tokens)
-            //    //{
-            //    //    ErrorOutput.AppendText($"{token}\n");
-            //    //}
-            //    ErrorOutput.Clear();
-            //    var lexer = new Lexer();
-            //    var tokens = lexer.Tokenize(TextEditor.Text);
-
-
-            //    var parser = new Parser(tokens);
-            //    parser.ParseProgram();
-
-
-            //    // Получаем список ошибок
-            //    List<string> errors = parser.GetErrors();
-
-            //    if (errors.Count > 0)
-            //    {
-            //        // Выводим ошибки, если они есть
-            //        foreach (var error in errors)
-            //        {
-            //            ErrorOutput.AppendText($"{error}\n");
-            //        }
-            //    }
-            //    else
-            //    {
-            //        ErrorOutput.AppendText("Парсинг прошел успешно!");
-            //    }
-
         }
-        private void HighlightErrors(string errors)
-        {
-            if (string.IsNullOrWhiteSpace(errors))
-            {
-                TextEditor.Background = Brushes.White;
-                return;
-            }
-
-            TextEditor.Background = new SolidColorBrush(Color.FromArgb(50, 255, 0, 0)); // Легкий красный оттенок
-        }
-
-        /*По курсачу*/
         private void NewFile(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(currentFilePath) || !string.IsNullOrEmpty(TextEditor.Text))
@@ -342,8 +268,10 @@ namespace ToC_Kursovik
             {
                 int caretPos = TextEditor.CaretIndex; // Запоминаем позицию курсора
                 _redoStack.Push(TextEditor.Text);
+                _isCommand = true;
                 TextEditor.Text = _undoStack.Pop();
                 TextEditor.CaretIndex = Math.Min(caretPos, TextEditor.Text.Length); // Восстанавливаем позицию курсора
+                _isCommand = false;
             }
         }
 
@@ -353,8 +281,10 @@ namespace ToC_Kursovik
             {
                 int caretPos = TextEditor.CaretIndex; // Запоминаем позицию курсора
                 _undoStack.Push(TextEditor.Text);
+                _isCommand = true;
                 TextEditor.Text = _redoStack.Pop();
                 TextEditor.CaretIndex = Math.Min(caretPos, TextEditor.Text.Length); // Восстанавливаем позицию курсора
+                _isCommand = false;
             }
         }
 
@@ -368,7 +298,8 @@ namespace ToC_Kursovik
 
         private void AboutApp(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Текстовый редактор на WPF\nРазработан для лабораторной работы.", "О программе");
+            MessageBox.Show("Синтаксический анализатор команды repeat языка NetLogo.\nРазработан в рамках курсовой работы по дисциплине" +
+                "\n \"Теория формальных языков и компиляторов\". Автор: Воронин Илья, гр. АВТ-213.", "О программе");
         }
 
         private void MoveWindow(object sender, MouseButtonEventArgs e)
@@ -405,7 +336,14 @@ namespace ToC_Kursovik
             UpdateLineNumbers();
             TextEditor.Visibility = Visibility.Visible;
             HighlightedText.Visibility = Visibility.Collapsed;
+            if (!_isCommand && _lastSavedText != TextEditor.Text)
+            {
+                _undoStack.Push(_lastSavedText);
+                _redoStack.Clear();
+                _lastSavedText = TextEditor.Text;
+            }
         }
+
 
         private void UpdateLineNumbers()
         {
@@ -430,6 +368,7 @@ namespace ToC_Kursovik
 
         private void ClearAll(object sender, RoutedEventArgs e)
         {
+            ErrorBorder.BorderBrush = new SolidColorBrush(Colors.Black);
             _undoStack.Push(TextEditor.Text);
             _redoStack.Clear();
 
@@ -448,6 +387,123 @@ namespace ToC_Kursovik
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
+
+        private void TaskSetup(object sender, RoutedEventArgs e)
+        {
+            TextEditor.Text = @"1. Постановка задачи
+
+Команда repeat языка NetLogo позволяет выполнить набор команд n раз подряд.
+Формат записи:
+repeat число_повторений [ команда1 число_шагов команда2 число_шагов …, командаN число_шагов ]
+Пример:
+repeat 5 [ forward 10 right 15 left 3 back 7 ]
+
+Справка (руководство пользователя) представлена в Приложении А.";
+        }
+        private void Grammar(object sender, RoutedEventArgs e)
+        {
+            TextEditor.Text = @"2. Грамматика
+
+Определим грамматику команды repeat языка NetLogo G[<Начало>] в нотации Хомского с продукциями P:
+<Начало> → 'repeat' <Пробел после repeat> 
+<Пробел после repeat>→ ' ' <Число после repeat>
+<Число после repeat>→ Ц <Число после repeat>
+<Число после repeat>  → '[' <Команда>
+<Команда> → 'forward' | 'right' | 'back' | 'left' <Пробел после команды>
+<Пробел после команды> → ' ' <Число после команды>
+<Число после команды> → Ц <Число после команды>
+<Число после команды> → ' ' <Команда> | <Конец>
+<Конец> → ']'
+Ц → 1 | 2 | .. | 9 | 0
+Следуя введенному формальному определению грамматики, представим G[<Начало>] ее составляющими:
+1.	Z = <Начало>
+2.	VT = { repeat '0' ... '9' '[' 'forward' 'right' 'back' 'left' ']' }
+3.	VN = {<Начало>, <Пробел после repeat>, <Число после repeat>, <Команда>, <Пробел после команды>, <Число после команды>, <Конец>, Ц }";
+        }
+        private void GrammarClassification(object sender, RoutedEventArgs e)
+        {
+            TextEditor.Text = @"3. Классификация грамматики
+
+Концепция автоматных, или регулярных, грамматик была сформулирована Ноамом Хомским в качестве одной из четырёх категорий формальных грамматик. Автоматные грамматики характеризуются наиболее строгими требованиями к структуре правил вывода, что делает их особенно подходящими для описания языков, распознаваемых конечными автоматами.
+Формальное определение грамматики:
+G[A]: A → aB | a | ε, a∈VT, A, B∈VN
+В левой части правила может находиться только один нетерминальный символ.
+В правой части — одна из трёх возможных конструкций:
+•	терминальный символ, за которым следует нетерминальный (aB),
+•	только терминальный символ (a),
+•	пустая строка (ε).
+Для этого класса однозначность и безвозвратность доказаны. Поэтому это наиболее часто используемый тип грамматик для практического приложения.
+Таким образом, все продукции разработанной грамматики G[<Начало>] делают ее автоматной.";
+        }
+        private void MethodOfAnalizys(object sender, RoutedEventArgs e)
+        {
+            TextEditor.Text = @"4. Метод анализа
+
+Грамматика G[<START>] представляет собой разновидность автоматной грамматики. Поскольку автоматные грамматики являются подклассом контекстно-свободных грамматик, для их анализа применяется метод рекурсивного спуска.
+Суть этого метода заключается в том, что каждому нетерминальному символу соответствует программная функция, предназначенная для распознавания цепочки, порождаемой этим нетерминалом. Эти функции вызываются в порядке, определённом правилами грамматики, и могут рекурсивно вызывать сами себя. Поэтому для реализации этого метода необходимо выбрать язык программирования, поддерживающий рекурсивные конструкции. В качестве такого языка был выбран C#.
+На рисунке 1 показана диаграмма, которая иллюстрирует список процедур и последовательность их вызова. Листинги программного кода для каждой процедуры приведены в приложении В.
+";
+        }
+        private void IronsMethod(object sender, RoutedEventArgs e)
+        {
+            TextEditor.Text = @"5. Диагностика и нейтрализация ошибок
+
+Следуя заданию курсовой работы, необходимо реализовать нейтрализацию синтаксических ошибок, используя метод Айронса.
+5.1 Метод Айронса
+
+При выявлении ошибки, когда в процессе синтаксического анализа во входной последовательности символов обнаруживается символ, не соответствующий ожидаемому, входная последовательность представляется в виде Tt, где T — ошибочный символ, а t — остальная часть входной последовательности. Процедура устранения ошибки включает следующие этапы:
+1.	Выявляются незавершённые ветви дерева разбора.
+2.	Создаётся множество L, которое включает в себя все оставшиеся символы незавершённых ветвей дерева разбора.
+3.	Из входной последовательности символов удаляется следующий символ до тех пор, пока цепочка не примет вид Tt, такой, что U => T, где U ∈ L, то есть, пока следующий в цепочке символ T не сможет быть выведен из какого-нибудь из остаточных символов недостроенных кустов.
+4.	Определяется, какая из незавершённых ветвей дерева разбора стала причиной появления символа U в множестве L (другими словами, к какой из незавершённых ветвей принадлежит символ U).
+Таким образом, устанавливается соответствие между недостроенным поддеревом и оставшейся частью входной последовательности после удаления ошибочного фрагмента.
+
+5.2 Метод Айронса для автоматной грамматики
+
+Разрабатываемый синтаксический анализатор основывается на использовании автоматной грамматики. Алгоритм Айронса, применяемый для автоматной грамматики, характеризуется тем, что в случае возникновения синтаксической ошибки в процессе анализа, в дереве разбора всегда будет присутствовать только один незавершенный узел (см. рисунок 2).
+ 
+Рисунок 2 – Недостроенный куст при возникновении синтаксической ошибки (выделен пунктиром)
+Поскольку этот узел является единственным незавершенным, он будет ассоциироваться с оставшейся входной последовательностью символов.
+Для коррекции ошибки предлагается последовательно удалять символы из входной последовательности до тех пор, пока не будет найден допустимый символ для текущего состояния анализа.
+
+
+ 
+";
+        }
+        private void TestExamples(object sender, RoutedEventArgs e)
+        {
+            TextEditor.Text = @"6. Тестовые примеры
+
+repeat 10 [ forward 15 back 2 right 21 ]
+repeat 5 [ forward 21 ]
+repeat  [ forward  ]
+repeat 4/// [ forw=+=ard 5 !!!\\\ back 2 left ***15 ]
+repeat 9 [ ]
+repat 9 [ forard  back ]
+repeat 15 [ forward 10 right 15 back 3 left 7";
+        }
+        private void Literature(object sender, RoutedEventArgs e)
+        {
+            TextEditor.Text = @"7. Литература
+
+1.	Шорников Ю.В. Теория и практика языковых процессоров : учеб. пособие / Ю.В. Шорников. – Новосибирск: Изд-во НГТУ, 2004.
+2.	Gries D. Designing Compilers for Digital Computers. New York, Jhon Wiley, 1971. 493 p.
+3.	Теория формальных языков и компиляторов [Электронный ресурс] / Электрон. дан. URL: https://dispace.edu.nstu.ru/didesk/course/show/8594, свободный. Яз.рус. (дата обращения 20.03.2025).
+";
+        }
+        private void Code(object sender, RoutedEventArgs e)
+        {
+            string filePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "code.txt");
+
+            if (File.Exists(filePath))
+            {
+                TextEditor.Text = File.ReadAllText(filePath);
+            }
+            else
+            {
+                TextEditor.Text = $"Файл не найден: {filePath}";
+            }
+        }
     }
 
 
